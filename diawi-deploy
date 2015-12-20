@@ -1,0 +1,82 @@
+#!/usr/bin/python
+#
+
+import argparse
+import json
+import os
+import random
+import string
+import urllib
+import urllib2
+
+# from http://stackoverflow.com/questions/68477/send-file-using-post-from-a-python-script
+class EnhancedFile(file):
+    def __init__(self, *args, **keyws):
+        file.__init__(self, *args, **keyws)
+
+    def __len__(self):
+        return int(os.fstat(self.fileno())[6])
+
+def do_request(request):
+    return urllib2.urlopen(request)
+
+def response_to_json(response):
+    responseStr = ""
+    for line in response:
+        responseStr += line
+
+    return json.loads(responseStr)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("filename",   help="The .ipa file to deploy.")
+parser.add_argument("-c", "--comment",  help="Comment to display to the installer")
+parser.add_argument("-e", "--email",    help="Email to receive the deployed app link")
+parser.add_argument("-p", "--password", help="Password for the deployed app")
+parser.add_argument("-n", "--notif",    help="Notify when user installs application", action="store_true")
+parser.add_argument("-u", "--udid",     help="Allow testers to find by UDID on Daiwi", action="store_true")
+parser.add_argument("-w", "--wall",     help="List icon on Diawi 'Wall of Apps'", action="store_true")
+args = parser.parse_args()
+
+
+# from http://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits-in-python
+namelen = 29
+tmpName = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(namelen))
+
+tmpFileName = "%s.ipa" % tmpName
+print "Uploading %s as %s..." % (args.filename, tmpFileName)
+
+with EnhancedFile(args.filename) as theFile:
+    response = do_request(urllib2.Request("http://www.diawi.com/upload.php?name=%s" % tmpFileName,
+                                          theFile, 
+                                          {'Content-Type': 'application/octet-stream'}))
+
+    resj = response_to_json(response)
+    if 'error' in resj:
+        print "Error uploading file: %s" % resj['error']
+        exit(1)
+
+print "Deploying uploaded file"
+_, bareName = os.path.split(args.filename)
+deployData = { 'uploader_0_tmpname' : tmpFileName,
+               'uploader_0_name'    : bareName,
+               'uploader_0_status'  : 'done',
+               'uploader_count'     : '1',
+               'password'           : args.password if args.password else '',
+               'comment'            : args.comment if args.comment else '',
+               'email'              : args.email if args.email else '',
+               'notifs'             : 'on' if args.notif else 'off',
+               'udid'               : 'on' if args.udid else 'off',
+               'wall'               : 'on' if args.wall else 'off'
+             }
+
+encoded = urllib.urlencode(deployData)
+print "Request sent to Diawi: %s" % encoded
+response = do_request(urllib2.Request("http://www.diawi.com/result.php", encoded))
+
+resj = response_to_json(response)
+
+if resj['status'] == 'ok':
+    print "Your app is deployed.  Use this link to install: %s" % resj['url']
+else:
+    print "Error deploying your app. %s" % resj
+
