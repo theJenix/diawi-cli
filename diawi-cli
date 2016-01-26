@@ -9,6 +9,50 @@ import string
 import urllib
 import urllib2
 
+handler=urllib2.HTTPHandler(debuglevel=1)
+opener = urllib2.build_opener(handler)
+urllib2.install_opener(opener)
+
+#urllib2.install_opener(
+#    urllib2.build_opener(
+#        urllib2.ProxyHandler({'https': '127.0.0.1:8888'})
+#    )
+#)
+import httplib
+from httplib import HTTPConnection, HTTPS_PORT
+import ssl
+import socket
+
+class HTTPSConnection(HTTPConnection):
+    "This class allows communication via SSL."
+    default_port = HTTPS_PORT
+
+    def __init__(self, host, port=None, key_file=None, cert_file=None,
+            strict=None, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+            source_address=None, context=None):
+        HTTPConnection.__init__(self, host, port, strict, timeout,
+                source_address)
+        self.key_file = key_file
+        self.cert_file = cert_file
+
+    def connect(self):
+        "Connect to a host on a given (SSL) port."
+        sock = socket.create_connection((self.host, self.port),
+                self.timeout, self.source_address)
+        if self._tunnel_host:
+            self.sock = sock
+            self._tunnel()
+        print "CONNECTING"
+        # this is the only line we modified from the httplib.py file
+        # we added the ssl_version variable
+        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1_1)
+
+#now we override the one in httplib
+httplib.HTTPSConnection = HTTPSConnection
+# ssl_version corrections are done
+
+
+
 # from http://stackoverflow.com/questions/68477/send-file-using-post-from-a-python-script
 class EnhancedFile(file):
     def __init__(self, *args, **keyws):
@@ -19,6 +63,11 @@ class EnhancedFile(file):
 
 def do_request(request):
     return urllib2.urlopen(request)
+#    try:
+#         return urllib2.urlopen(request)
+#    except urllib2.URLError, e:
+#         print e.reason
+#         print e.read()
 
 def response_to_json(response):
     responseStr = ""
@@ -46,9 +95,10 @@ tmpFileName = "%s.ipa" % tmpName
 print "Uploading %s as %s..." % (args.filename, tmpFileName)
 
 with EnhancedFile(args.filename) as theFile:
-    response = do_request(urllib2.Request("http://www.diawi.com/upload.php?name=%s" % tmpFileName,
+    response = do_request(urllib2.Request("https://www.diawi.com/upload.php?name=%s" % tmpFileName,
                                           theFile, 
-                                          {'Content-Type': 'application/octet-stream'}))
+                                          {'Content-Type': 'application/octet-stream',
+                                           'Content-Length': len(theFile)}))
 
     resj = response_to_json(response)
     if 'error' in resj:
@@ -71,7 +121,7 @@ deployData = { 'uploader_0_tmpname' : tmpFileName,
 
 encoded = urllib.urlencode(deployData)
 print "Request sent to Diawi: %s" % encoded
-response = do_request(urllib2.Request("http://www.diawi.com/result.php", encoded))
+response = do_request(urllib2.Request("https://www.diawi.com/result.php", encoded))
 
 resj = response_to_json(response)
 
