@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 
 import argparse
@@ -42,16 +42,14 @@ class HTTPSConnection(HTTPConnection):
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        print "CONNECTING"
         # this is the only line we modified from the httplib.py file
         # we added the ssl_version variable
-        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1_1)
+        # NOTE: as of 01/25/2016 (maybe sooner) Diawi.com requires TLS 1.2
+        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1_2)
 
 #now we override the one in httplib
 httplib.HTTPSConnection = HTTPSConnection
 # ssl_version corrections are done
-
-
 
 # from http://stackoverflow.com/questions/68477/send-file-using-post-from-a-python-script
 class EnhancedFile(file):
