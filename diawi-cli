@@ -8,6 +8,7 @@ import random
 import string
 import urllib
 import urllib2
+import sys
 
 handler=urllib2.HTTPHandler(debuglevel=1)
 opener = urllib2.build_opener(handler)
@@ -22,6 +23,14 @@ import httplib
 from httplib import HTTPConnection, HTTPS_PORT
 import ssl
 import socket
+
+def is_supported_version():
+    try:
+        ssl.PROTOCOL_TLSv1_2
+    except AttributeError:
+        return False
+    else:
+        return True
 
 class HTTPSConnection(HTTPConnection):
     "This class allows communication via SSL."
@@ -73,6 +82,12 @@ def response_to_json(response):
         responseStr += line
 
     return json.loads(responseStr)
+
+if not is_supported_version():
+    print "ERROR: This script requires a Python interpreter with TLS v1.2 support, which was added in Python 2.7.9.  Please \
+upgrade your Python interpreter, or recompile with TLS v1.2 support.  Note that version of Python shipped with Mac OS \
+X El Capitan is nominally 2.7.10, but is missing TLS v1.2 support.  Exiting."
+    exit(1)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("filename",   help="The .ipa file to deploy.")
