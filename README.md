@@ -21,7 +21,6 @@ Many of these features are currently untested.  Please let me know if something 
 
 ## Requirements
 
-This script requires Python 2.7.9 or later, to make use of the ssl.PROTOCOL_TLSv1_2 ssl version constant.  Diawi.com requires HTTPS connections using TLS v1.2.
-Note: the version of Python installed on Mac OS X El Capitan is 2.7.10 but it does not support the correct ssl version.  You must install python 2.7.9+ from source, or from Homebrew.
+This script requires Python 2 with TLS v1.2 support.  This was added in Python 2.7.9, but the version of Python that ships with Mac OS X El Capital claims to be 2.7.10 and it does not support TLS v1.2.  The script will check to make sure it's supported and print out an error message if not; if it isn't you will need to upgrade your Python interpreter (or in the case of OS X, install the latest from source or Homebrew).
 
 Tested on Mac OS X El Capitan using Python 2.7.11 installed from Homebrew.
