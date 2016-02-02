@@ -84,9 +84,10 @@ def response_to_json(response):
     return json.loads(responseStr)
 
 if not is_supported_version():
-    print "ERROR: This script requires a Python interpreter with TLS v1.2 support, which was added in Python 2.7.9.  Please \
-upgrade your Python interpreter, or recompile with TLS v1.2 support.  Note that version of Python shipped with Mac OS \
-X El Capitan is nominally 2.7.10, but is missing TLS v1.2 support.  Exiting."
+    ver = "%d.%d.%d" % (sys.version_info[0], sys.version_info[1], sys.version_info[2])
+    print "ERROR: This script requires a Python interpreter with TLS v1.2 support, which was added in Python 2.7.9.  \
+You are running version " + ver + ".   Please upgrade your Python interpreter, or recompile with TLS v1.2 support.  Note \
+that version of Python shipped with Mac OS X El Capitan is nominally 2.7.10, but is missing TLS v1.2 support.  Exiting."
     exit(1)
 
 parser = argparse.ArgumentParser()
