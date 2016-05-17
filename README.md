@@ -1,3 +1,5 @@
+Note: Not working since Diawi2 was rolled out and I haven't had time to fix it.  Here's an alternative you should check out: https://github.com/BarryReid/another-diawi-cli
+
 # diawi-cli
 A simple command line script to deploy Ad-Hoc iOS apps using diawi.com.
 
